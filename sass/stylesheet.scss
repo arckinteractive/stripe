@@ -1,0 +1,198 @@
+@import "compass/css3"; // compass css3 helpers
+
+@import "font-awesome/variables";
+@import "font-awesome/mixins";
+
+@import "variables";
+@import "mixins";
+
+$graphics-path : '../../../mod/hypeGateway/graphics/';
+
+$grid : (6, 12, 18, 24);
+$cols : (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24);
+@each $total in $grid {
+	@each $width in $cols {
+		@if $total >= $width {
+			.stripe-col-#{$width}of#{$total} {
+				@include elgg-col($columns: $width, $total-columns: $total);
+				margin-bottom: 10px;
+			}
+		}
+	}
+}
+
+.stripe-row {
+	@include clearfix;
+	[class^="stripe-col"] {
+		@include box-sizing(border-box);
+	}
+}
+
+body {
+	@include loader(stripe-state-loading);
+	z-index: 10000;
+}
+
+.stripe-modal {
+	@include modal;
+}
+#stripe-modal {
+	padding: 20px;
+	width: auto;
+	margin: 0 auto;
+}
+
+.ui-widget-overlay {
+	@include modal-bg;
+}
+
+.stripe-info {
+	margin-bottom: 5px;
+}
+
+.elgg-form.stripe-form {
+	* {
+		@include box-sizing(border-box);
+	}
+	fieldset.has-legend {
+		padding: 15px;
+		border: 1px solid $border-color;
+		margin-bottom: 15px;
+		legend {
+			font-size: 110%;
+		}
+	}
+	input[type="text"],
+	input[type="password"],
+	textarea {
+		width: 100%;
+	}
+	&.elgg-form-stripe-address-edit {
+		input[type="text"] {
+			width: 100%;
+		}
+	}
+	select {
+		width: auto;
+		max-width: 300px;
+	}
+	select[name="currency"] {
+		width: 65px;
+		background-position: 50px;
+	}
+	input[type="file"], input[type="checkbox"], input[type="radio"], select, label {
+		margin: 0 0 5px 0;
+	}
+	.stripe-form-row {
+		& > li {
+			list-style: none;
+			display: inline-block;
+			margin: 0 4px;
+			vertical-align: top;
+			.elgg-icon {
+				margin: 5px;
+			}
+		}
+	}
+	.stripe-price-with-currency {
+		position: relative;
+		padding-right: 65px;
+		max-width: 400px;
+		.stripe-input-currency {
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
+	}
+	.columns {
+		margin-bottom: 10px;
+	}
+	[data-stripe="exp-month"],[data-stripe="exp-year"] {
+		width: 48%;
+		background-position: 85%;
+		max-width: 125px;
+	}
+	.required:after {
+		display: inline-block;
+		width: 10px;
+		margin: -5px 0 0 5px;
+		content: "*";
+		font-weight: bold;
+		color: #ee5f5b;
+	}
+	.elgg-text-help {
+		& + input, & + select, & + textarea {
+			margin: 10px;
+		}
+	}
+	.elgg-foot {
+		margin-top: 10px;
+		text-align: right;
+	}
+	.stripe-payment-errors {
+		color: $alert-color;
+		padding: 5px;
+	}
+	.stripe-merchant-terms {
+		background: #f4f4f4;
+		font-family: Courier;
+		border: 1px solid #e8e8e8;
+		padding: 20px;
+		height: 300px;
+		overflow-y: scroll;
+		font-size: 14px;
+		margin-bottom: 10px;
+	}
+	.elgg-col {
+		label, .elgg-help-text {
+			display: block;
+			margin-bottom: 3px;
+		}
+	}
+
+	.parsley-error {
+		border-color: #ee5f5b;
+		@include box-shadow(0 0 6px #f8b9b7);
+	}
+	.parsley-error-list {
+		font-size: 12px;
+		color: #ee5f5b;
+		li {
+			margin: 4px 0;
+		}
+	}
+
+}
+
+.stripe-accepted-cards {
+	& > li {
+		display: inline-block;
+		margin: 3px;
+		img {
+			max-height: 35px;
+		}
+	}
+
+}
+
+.stripe-amount {
+	font-weight: bold;
+	.stripe-status-inactive & {
+		font-weight: normal;
+	}
+}
+
+.elgg-menu-stripe-actions {
+	margin: 0;
+	& > li {
+		display: inline-block;
+		margin-right: 10px;
+	}
+}
+
+.stripe-status-inactive {
+	opacity: 0.5;
+	&:hover {
+		opacity: 1;
+	}
+}
