@@ -1,0 +1,4 @@
+stripe
+======
+
+Elgg stripe integration
