@@ -48,7 +48,7 @@ function stripe_init() {
 	elgg_register_plugin_hook_handler('charge.refunded', 'stripe.events', 'stripe_charge_refunded_event');
 
 	// Stripe Webhooks
-	expose_function('stripe.webhooks', 'stripe_webhook_handler', array(
+	elgg_ws_expose_function('stripe.webhooks', 'stripe_webhook_handler', array(
 		'environment' => array(
 			'type' => 'string',
 			'required' => true,
