@@ -1,9 +1,8 @@
 <?php
 
-$token = get_input('stripe-token');
-
-$guid = get_input('guid');
-$email = get_input('email');
+$token       = get_input('stripe-token');
+$guid        = get_input('guid');
+$email       = get_input('email');
 $customer_id = get_input('customer_id');
 
 if ($guid) {

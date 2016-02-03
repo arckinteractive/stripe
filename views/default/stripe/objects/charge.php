@@ -1,7 +1,7 @@
 <?php
 $charge = elgg_extract('object', $vars);
 
-if (!$charge instanceof Stripe_Charge) {
+if (!$charge instanceof \Stripe\Charge) {
 	return;
 }
 

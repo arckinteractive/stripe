@@ -10,7 +10,7 @@ class StripeCustomer {
 
 	/**
 	 * Stripe customer account
-	 * @var Stripe_Customer
+	 * @var \Stripe\Customer
 	 */
 	protected $account;
 
@@ -104,8 +104,8 @@ class StripeCustomer {
 
 	/**
 	 * Retrieve a Stripe customer account
-	 * @return Stripe_Customer|boolean
-	 * @throws Stripe_Error
+	 * @return \Stripe\Customer|boolean
+	 * @throws \Stripe\Error
 	 */
 	public function getCustomerAccount() {
 
@@ -118,16 +118,16 @@ class StripeCustomer {
 			$customer_id = $this->getCustomerId();
 
 			if (!$customer_id) {
-				throw new Stripe_Error('No customer id');
+				throw new \Stripe\Error('No customer id');
 			}
 
 			$stripe = new StripeClient();
 			$account = $stripe->getCustomer($customer_id);
 			if (!$account->id || isset($account->deleted)) {
-				throw new Stripe_Error('Customer does not exist or has been deleted');
+				throw new \Stripe\Error('Customer does not exist or has been deleted');
 			}
 			return $account;
-		} catch (Stripe_Error $e) {
+		} catch (\Stripe\Error $e) {
 			$this->user->removePrivateSetting('stripe_customer_id');
 			error_log($e->getMessage());
 			return $this->getCustomerAccount();

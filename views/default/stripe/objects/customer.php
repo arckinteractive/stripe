@@ -1,23 +1,31 @@
 <?php
+
 $customer = elgg_extract('object', $vars);
 
-if (!$customer instanceof Stripe_Customer) {
+if (!$customer instanceof \Stripe\Customer) {
 	return;
 }
+
 ?>
 
 <div class="stripe-row stripe-object stripe-customer">
 	<div class="stripe-col-6of12 stripe-customer-user">
 		<?php
+		
 		if ($user = stripe_get_user_from_customer_id($customer->id)) {
+		
 			$icon = elgg_view_entity_icon($user, 'tiny');
 			$link = elgg_view('output/url', array(
 				'text' => $user->name,
 				'href' => $user->getURL()
 			));
+		
 			$alt = '';
+		
 			if (is_array($user->stripe_customer_id)) {
+		
 				$count = sizeof($user->stripe_customer_id);
+		
 				if ($user->getPrivateSetting('stripe_customer_id') == $customer->id) {
 					$alt = "Primary ($count total)";
 				} else {
@@ -31,6 +39,7 @@ if (!$customer instanceof Stripe_Customer) {
 		}
 		?>
 	</div>
+	
 	<div class="stripe-col-6of12 stripe-customer-details">
 		<div class="stripe-info">
 			<?php echo $customer->id ?>

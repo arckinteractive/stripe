@@ -1,7 +1,7 @@
 <?php
 $subscription = elgg_extract('object', $vars);
 
-if (!$subscription instanceof Stripe_Subscription) {
+if (!$subscription instanceof \Stripe\Subscription) {
 	return;
 }
 

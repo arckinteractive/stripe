@@ -10,7 +10,7 @@ class StripeMerchant {
 
 	/**
 	 * Stripe account
-	 * @var Stripe_Customer
+	 * @var \Stripe\Customer
 	 */
 	protected $account;
 
@@ -49,8 +49,8 @@ class StripeMerchant {
 	/**
 	 * Retrieve a Stripe account for this mercant
 	 *
-	 * @return Stripe_Customer|boolean
-	 * @throws Stripe_Error
+	 * @return \Stripe\Customer|boolean
+	 * @throws \Stripe\Error
 	 */
 	public function getMerchantAccount() {
 
@@ -71,11 +71,11 @@ class StripeMerchant {
 			$stripe->setAccessToken($access_token);
 			$account = $stripe->getAccount();
 			if (!$account->id || isset($account->deleted)) {
-				throw new Stripe_Error('Account does not exist or has been deleted');
+				throw new \Stripe\Error('Account does not exist or has been deleted');
 			}
 			$this->account = $account;
 			return $this->account;
-		} catch (Stripe_Error $e) {
+		} catch (\Stripe\Error $e) {
 			$this->entity->setPrivateSetting('stripe_secret_key', null);
 			$this->entity->setPrivateSetting('stripe_publishable_key', null);
 			return false;

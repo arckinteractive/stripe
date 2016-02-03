@@ -1,7 +1,7 @@
 <?php
 
 // Composer autoload
-require_once __DIR__ . '/vendors/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 
 require_once __DIR__ . '/lib/functions.php';
 require_once __DIR__ . '/lib/events.php';
@@ -37,12 +37,9 @@ function stripe_init() {
 	elgg_register_page_handler('billing', 'stripe_page_handler');
 
 	elgg_register_plugin_hook_handler('register', 'menu:stripe-actions', 'stripe_actions_menu');
-
 	elgg_register_plugin_hook_handler('ping', 'stripe.events', 'stripe_ping_event');
-
 	elgg_register_plugin_hook_handler('customer.created', 'stripe.events', 'stripe_customer_created_event');
 	elgg_register_plugin_hook_handler('customer.deleted', 'stripe.events', 'stripe_customer_deleted_event');
-
 	elgg_register_plugin_hook_handler('charge.succeeded', 'stripe.events', 'stripe_charge_succeeded_event');
 	elgg_register_plugin_hook_handler('charge.failed', 'stripe.events', 'stripe_charge_failed_event');
 	elgg_register_plugin_hook_handler('charge.refunded', 'stripe.events', 'stripe_charge_refunded_event');
@@ -50,9 +47,9 @@ function stripe_init() {
 	// Stripe Webhooks
 	elgg_ws_expose_function('stripe.webhooks', 'stripe_webhook_handler', array(
 		'environment' => array(
-			'type' => 'string',
+			'type'     => 'string',
 			'required' => true,
-		)), 'Handles webhooks received from Stripe', 'POST', false, false);
+	)), 'Handles webhooks received from Stripe', 'POST', false, false);
 
 	// Map newly registered users to their Stripe profiles if any
 	elgg_register_event_handler('create', 'user', 'stripe_register_user');
@@ -63,12 +60,12 @@ function stripe_init() {
  */
 function stripe_webhook_handler($environment) {
 
-	$body = get_post_data();
+	$body       = get_post_data();
 	$event_json = json_decode($body);
-	$event_id = $event_json->id;
+	$event_id   = $event_json->id;
 
 	$gateway = new StripeClient($environment);
-	$event = $gateway->getEvent($event_id);
+	$event   = $gateway->getEvent($event_id);
 
 	if (!$event) {
 		return array(
@@ -79,12 +76,13 @@ function stripe_webhook_handler($environment) {
 
 	$ia = elgg_set_ignore_access(true);
 	$ha = access_get_show_hidden_status();
+	
 	access_show_hidden_entities(true);
 
 	$result = elgg_trigger_plugin_hook_handler($event->type, 'stripe.events', array(
 		'environment' => $environment,
-		'event' => $event,
-			), array(
+		'event'       => $event,
+	), array(
 		'success' => true,
 	));
 
