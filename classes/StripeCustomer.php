@@ -118,19 +118,25 @@ class StripeCustomer {
 			$customer_id = $this->getCustomerId();
 
 			if (!$customer_id) {
-				throw new \Stripe\Error('No customer id');
+				throw new \Stripe\Error\Api('No customer id');
 			}
 
-			$stripe = new StripeClient();
+			$stripe  = new StripeClient();
 			$account = $stripe->getCustomer($customer_id);
+		
 			if (!$account->id || isset($account->deleted)) {
-				throw new \Stripe\Error('Customer does not exist or has been deleted');
+				throw new \Stripe\Error\Api('Customer does not exist or has been deleted');
 			}
+		
 			return $account;
-		} catch (\Stripe\Error $e) {
-			$this->user->removePrivateSetting('stripe_customer_id');
+		
+		} catch (\Stripe\Error\Api $e) {
+			
+			//$this->user->removePrivateSetting('stripe_customer_id');
+			
 			error_log($e->getMessage());
-			return $this->getCustomerAccount();
+			
+			return false;
 		}
 	}
 

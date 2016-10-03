@@ -1,1 +1,1 @@
-elgg.config.stripePublishableKey = '<?php echo StripeClientFactory::getPublishableKey() ?>';
+elgg.config.stripePublishableKey = '<?php echo StripeClient::getPublishableKey() ?>';

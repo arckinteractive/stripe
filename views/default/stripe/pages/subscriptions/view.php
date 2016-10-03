@@ -4,8 +4,8 @@ $id = elgg_extract('id', $vars);
 
 $user = elgg_get_page_owner_entity();
 
-$stripe = new StripeClient();
-$charge = $stripe->getSubscription($user, $id);
+$stripe = new StripeClient($user->guid);
+$charge = $stripe->getSubscription($id);
 
 $title = elgg_echo('stripe:charges:title', array($charge->id));
 echo elgg_view_module('info', elgg_echo('stripe:charges:title', array($charge->id)), elgg_view('stripe/objects/invoice', array(

@@ -2,13 +2,13 @@
 
 $user = elgg_extract('entity', $vars, elgg_get_logged_in_user_entity());
 
-$stripe = new StripeClient();
-$cards = $stripe->getCards($user->guid);
+$stripe = new StripeClient($user->guid);
+$cards = $stripe->getCards();
 
 $options_values = array('' => elgg_echo('stripe:cards:select'));
 if ($cards->data) {
 	foreach ($cards->data as $card) {
-		$options_values[$card->id] = "{$card->type}-{$card->last4} ({$card->exp_month} / {$card->exp_year})";
+		$options_values[$card->id] = "{$card->brand}-{$card->last4} ({$card->exp_month} / {$card->exp_year})";
 	}
 }
 $options_values['__new__'] = elgg_echo('stripe:cards:add');

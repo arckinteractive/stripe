@@ -23,8 +23,8 @@ function stripe_actions_menu($hook, $type, $return, $params) {
 				return $return;
 			}
 
-			$stripe  = new StripeClient();
-			$default = $stripe->getDefaultCard($user->guid);
+			$stripe  = new StripeClient($user->guid);
+			$default = $stripe->getDefaultCard();
 
 			if ($default->id == $object->id) {
 				$return[] = ElggMenuItem::factory(array(
@@ -308,7 +308,7 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 			$customer->name,
 			$amount,
 			$merchant->name,
-			$charge->card->type,
+			$charge->card->brand,
 			$charge->card->last4,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
 		));
@@ -365,7 +365,7 @@ function stripe_charge_failed_event($hook, $type, $return, $params) {
 			$customer->name,
 			$amount,
 			$merchant->name,
-			$charge->card->type,
+			$charge->card->brand,
 			$charge->card->last4,
 			$charge->failure_message,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
@@ -423,7 +423,7 @@ function stripe_charge_refunded_event($hook, $type, $return, $params) {
 			$customer->name,
 			$amount,
 			$merchant->name,
-			$charge->card->type,
+			$charge->card->brand,
 			$charge->card->last4,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
 		));

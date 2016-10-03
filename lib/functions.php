@@ -11,8 +11,8 @@ function stripe_has_card($user_guid = 0) {
 		$user_guid = elgg_get_logged_in_user_guid();
 	}
 
-	$stripe = new StripeClient();
-	$default_card = $stripe->getDefaultCard($user_guid);
+	$stripe = new StripeClient($user_guid);
+	$default_card = $stripe->getDefaultCard();
 
 	return $default_card;
 }
@@ -33,11 +33,10 @@ function stripe_create_card($user_guid = 0, $token = '') {
 		return false;
 	}
 
-	$stripe = new StripeClient();
-	$card = $stripe->createCard($user_guid, $token);
+	$stripe = new StripeClient($user_guid);
+	$card = $stripe->createCard($token);
 
 	return $card;
-
 }
 
 /**

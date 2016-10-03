@@ -3,39 +3,103 @@
 class StripeClient {
 
 	/**
+	 * Customer object
+	 * @var mixed bool/object
+	 */
+	private $customer = null;
+
+	/**
 	 * Error log
 	 * @var array
 	 */
 	protected $log = array();
 
 	/**
-	 * Access token used to sign API requests
-	 * This will not be used on operations with customers,
-	 * as the intention is to keep shared customers between multiple accounts
-	 * @var string
-	 */
-	protected $access_token = null;
-
-	/**
 	 * Constructs a new Stripe instance
-	 * @param string $environment		'sandbox' or 'production'
-	 * @param mixed $merchant_attr		Account ID, ElggEntity or entity guid of the merchant on whose behalf the requests are to be made
 	 * @return StripeClient
 	 */
-	function __construct($environment = null, $merchant_attr = null) {
-		StripeClientFactory::stageEnvironment($environment);
+	function __construct($attribute=null) {		
+		\Stripe\Stripe::setApiKey(StripeClient::getSecretKey());
 		
-		$merchant = new StripeMerchant($merchant_attr);
-		$access_token = $merchant->getAccessToken();
-		$this->setAccessToken($access_token);
+		if ($attribute) {
+			$this->customer = $this->getCustomer(StripeClient::getCustomerIdFromAttribute($attribute));
+		}
+	}
+
+	public static function getCustomerIdFromAttribute($attribute)
+	{
+		if ($attribute instanceof ElggUser) {
+		
+			return $attribute->getPrivateSetting('stripe_customer_id');
+		
+		} else if (is_email_address($attribute)) {
+		
+			$users = get_user_by_email($attribute);
+		
+			if ($users) {
+				return $users[0]->getPrivateSetting('stripe_customer_id');
+			}
+		
+		} else if (is_string($attribute) && substr($attribute, 0, 4) == 'cus_') {
+		
+			return $attribute;
+		
+		} else if (is_numeric($attribute)) {
+		
+			return get_entity($attribute)->getPrivateSetting('stripe_customer_id');
+		}
+
+		return null;
+	}
+
+	public static function getSecretKey()
+	{
+		$environment = elgg_get_plugin_setting('stripe_environment', 'stripe');
+
+		if ($environment == 'production') {
+			$secret_key = elgg_get_plugin_setting('stripe_production_secret_key', 'stripe');
+		} else {
+			$secret_key = elgg_get_plugin_setting('stripe_test_secret_key', 'stripe');
+		}
+
+		return $secret_key;
+	}
+
+	public static function getPublishableKey()
+	{
+		$environment = elgg_get_plugin_setting('stripe_environment', 'stripe');
+		
+		if ($environment == 'production') {
+			$publishable_key = elgg_get_plugin_setting('stripe_production_publishable_key', 'stripe');
+		} else {
+			$publishable_key = elgg_get_plugin_setting('stripe_test_publishable_key', 'stripe');
+		}
+
+		return $publishable_key;
 	}
 
 	/**
-	 * Set an access token for individual requests
-	 * @param string $access_token		Access token from Stripe Connect flow, defaults to site access token
+	 * Get a list of currencies supported by the merchant
+	 * @return array
 	 */
-	public function setAccessToken($access_token = null) {
-		$this->access_token = $access_token;
+	public function getSupportedCurrencies() {
+
+		$account = $this->getAccount();
+
+		return ($account) ? $account->currencies_supported : array();
+	}
+
+	public function getSupportedCards() 
+	{
+		$account = $this->getAccount();
+
+		$return = array('Visa', 'MasterCard', 'American Express');
+
+		if ($account->country == 'US') {
+			array_push($return, 'JCB', 'Diners Club', 'Discover');
+		}
+
+		return ($account) ? $return : array();
 	}
 
 	/**
@@ -43,9 +107,31 @@ class StripeClient {
 	 * @param string $customer_id
 	 * @return \Stripe\Customer|false
 	 */
-	public function getCustomer($customer_id = '') {
+	public function getCustomer($id=null) {
+
+		if (!$id && isset($this->customer)) {
+			return $this->customer;
+		}
+
+		$customer_id = $id ? $id : $this->customer->id;
+		
+		if (!$customer_id && elgg_is_logged_in()) {
+			$customer_id = $this->getCustomerIdFromAttribute(elgg_get_logged_in_user_entity());
+			if (!$customer_id) {
+				try {
+					return $this->createCustomer(elgg_get_logged_in_user_entity());
+				}
+				catch (Exception $e) {
+					$this->log($ex);
+					return false;
+				}
+			}
+		}
+
 		try {
+
 			return \Stripe\Customer::retrieve($customer_id);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -61,6 +147,7 @@ class StripeClient {
 	public function createCustomer($user = null, $data = array()) {
 
 		$fields = array(
+			'source',
 			'account_balance',
 			'card',
 			'coupon',
@@ -71,6 +158,7 @@ class StripeClient {
 			'description',
 			'email',
 		);
+
 		try {
 
 			foreach ($data as $key => $value) {
@@ -81,51 +169,62 @@ class StripeClient {
 			$data = array_filter($data);
 
 			if ($user) {
+			
 				if (!$data['email']) {
 					$data['email'] = $user->email;
 				}
+			
 				if (!$data['description']) {
 					$data['description'] = $user->name;
 				}
+			
 				if (!is_array($data['metadata'])) {
 					$data['metadata'] = array();
 				}
+			
 				$data['metadata']['guid'] = $user->guid;
 				$data['metadata']['username'] = $user->username;
 			}
 
-			$customer = \Stripe\Customer::create($data);
+			$this->customer = \Stripe\Customer::create($data);
 
 			if ($user && $user->guid) {
 
 				// Store any customer IDs this user might have for reference
 				$stripe_ids = $user->stripe_customer_id;
+			
 				if (!$stripe_ids) {
 					$stripe_ids = array();
 				} else if (!is_array($stripe_ids)) {
 					$stripe_ids = array($stripe_ids);
 				}
-				if (!in_array($customer->id, $stripe_ids)) {
-					create_metadata($user->guid, 'stripe_customer_id', $customer->id, '', $user->guid, ACCESS_PUBLIC, true);
+			
+				if (!in_array($this->customer->id, $stripe_ids)) {
+					create_metadata($user->guid, 'stripe_customer_id', $this->customer->id, '', $user->guid, ACCESS_PUBLIC, true);
 				}
 
 				// Store current Customer ID
-				$user->setPrivateSetting('stripe_customer_id', $customer->id);
+				$user->setPrivateSetting('stripe_customer_id', $this->customer->id);
+			
 			} else {
 
 				// Store customer IDs with their email reference locally
 				// so that users can be assigned their existing customer ID upon registration
-				$customer_ref = elgg_get_plugin_setting($customer->email, 'stripe');
+				$customer_ref = elgg_get_plugin_setting($this->customer->email, 'stripe');
+				
 				if ($customer_ref) {
 					$customer_ref = unserialize($customer_ref);
 				} else {
 					$customer_ref = array();
 				}
-				array_unshift($customer_ref, $customer->id);
-				elgg_set_plugin_setting($customer->email, serialize($customer_ref), 'stripe');
+				
+				array_unshift($customer_ref, $this->customer->id);
+				
+				elgg_set_plugin_setting($this->customer->email, serialize($customer_ref), 'stripe');
 			}
 
-			return $customer;
+			return $this->customer;
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -206,15 +305,18 @@ class StripeClient {
 	 * @return array|false
 	 */
 	public function getCustomers($limit = 10, $ending_before = null, $starting_after = null, $created = null) {
+		
 		try {
+		
 			$params = array_filter(array(
-				'limit' => $limit,
-				'ending_before' => $ending_before,
+				'limit'          => $limit,
+				'ending_before'  => $ending_before,
 				'starting_after' => $starting_after,
-				'created' => $created,
+				'created'        => $created,
 			));
 
-			return \Stripe\Customer::all($params, $this->access_token);
+			return \Stripe\Customer::all($params);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -223,17 +325,20 @@ class StripeClient {
 
 	/**
 	 * Get customer's default card
-	 * @param mixed $cus_attr
 	 * @return \Stripe\Card|false
 	 */
-	public function getDefaultCard($cus_attr = null) {
+	public function getDefaultCard() {
+		
 		try {
-			$customer = new StripeCustomer($cus_attr);
-			$default_card = $customer->getCustomerAccount()->default_card;
-			if (!$default_card) {
+		
+			$card_id = $this->getCustomer()->default_card;
+			
+			if (!$card_id) {
 				return false;
 			}
-			return $customer->getCustomerAccount()->cards->retrieve($default_card, $this->access_token);
+			
+			return $this->getCustomer()->sources->retrieve($card_id);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -242,19 +347,20 @@ class StripeClient {
 
 	/**
 	 * Set customer's default card
-	 * @param mixed $cus_attr
 	 * @param string $card_id
 	 * @return \Stripe\Card|false
 	 */
-	public function setDefaultCard($cus_attr = null, $card_id = '') {
+	public function setDefaultCard($card_id = '') {
+		
+		$customer = $this->getCustomer();
+
 		try {
-			$customer = new StripeCustomer($cus_attr);
-			$account = $customer->getCustomerAccount();
-			$account->default_card = $card_id;
-			if (!$account->save()) {
-				return false;
-			}
-			return $this->getDefaultCard($cus_attr);
+
+			$customer->default_source = $card_id;
+			$customer->save();
+		
+			return $this->getDefaultCard();
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -263,14 +369,15 @@ class StripeClient {
 
 	/**
 	 * Get an existing customer card
-	 * @param mixed $cus_attr
 	 * @param string $card_id
 	 * @return \Stripe\Card|false
 	 */
-	public function getCard($cus_attr = null, $card_id = '') {
+	public function getCard($card_id = '') {
+		
 		try {
-			$customer = new StripeCustomer($cus_attr);
-			return $customer->getCustomerAccount()->cards->retrieve($card_id, $this->access_token);
+		
+			return $this->getCustomer()->sources->retrieve($card_id);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -279,42 +386,20 @@ class StripeClient {
 
 	/**
 	 * Create a new card from token or array
-	 * @param mixed $cus_attr
 	 * @param array|string $card
 	 * @return \Stripe\Card|false
 	 */
-	public function createCard($cus_attr = null, $card = array()) {
+	public function createCard($token, $default=true) {
+		
 		try {
-			if (is_array($card)) {
+		
+			$card = $this->getCustomer()->sources->create(array("source" => $token));
 
-				$fields = array(
-					'number',
-					'exp_month',
-					'exp_year',
-					'cvc',
-					'name',
-					'address_line1',
-					'address_lin2',
-					'address_city',
-					'address_zip',
-					'address_state',
-					'address_country',
-				);
-				foreach ($card as $key => $value) {
-					if (!in_array($key, $fields)) {
-						$card[$key] = '';
-					}
-				}
-				$card = array_filter($card);
-			} else {
-				$card = array(
-					'card' => $card
-				);
+			if (isset($card->id) && $default) {
+				$this->setDefaultCard($card->id);
 			}
 
-			$customer = new StripeCustomer($cus_attr);
-		
-			return $customer->getCustomerAccount()->cards->create($card);
+			return $card;
 		
 		} catch (Exception $ex) {
 			$this->log($ex);
@@ -324,13 +409,14 @@ class StripeClient {
 
 	/**
 	 * Update a card
-	 * @param mixed $cus_attr
 	 * @param string $card_id
 	 * @param array $data
 	 * @return \Stripe\Card|false
 	 */
-	public function updateCard($cus_attr = null, $card_id = '', $data = array()) {
+	public function updateCard($card_id = '', $data = array()) {
+		
 		try {
+		
 			$fields = array(
 				'exp_month',
 				'exp_year',
@@ -343,13 +429,16 @@ class StripeClient {
 				'address_country',
 			);
 
-			$card = $this->getCard($cus_attr, $card_id);
+			$card = $this->getCard($card_id);
+			
 			foreach ($data as $key => $value) {
 				if (in_array($key, $fields)) {
 					$card->$key = $value;
 				}
 			}
+			
 			$card->save();
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -358,20 +447,25 @@ class StripeClient {
 
 	/**
 	 * Delete a card
-	 * @param mixed $cus_attr
 	 * @param string $card_id
 	 * @return boolean
 	 */
-	public function deleteCard($cus_attr = null, $card_id = null) {
+	public function deleteCard($card_id = null) {
+		
 		try {
-			$card = $this->getCard($cus_attr, $card_id);
+		
+			$card = $this->getCard($card_id);
+		
 			if (!$card) {
 				return true;
 			}
+		
 			$response = $card->delete();
+		
 			if ($response->deleted) {
 				return true;
 			}
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -380,21 +474,29 @@ class StripeClient {
 
 	/**
 	 * Get all customer cards
-	 * @param mixed $cus_attr	GUID of the customer
 	 * @param string $limit				Number of cards to retrieve
 	 * @param string $ending_before		ID of the first element in the previous list
 	 * @param string $starting_after	ID of the last element in the previous list
 	 * @return array|false
 	 */
-	public function getCards($cus_attr = null, $limit = 10, $ending_before = null, $starting_after = null) {
+	public function getCards($limit = 10, $ending_before = null, $starting_after = null) {
+		
 		try {
+		
 			$params = array_filter(array(
-				'limit' => $limit,
-				'ending_before' => $ending_before,
+				'object'         => 'card',
+				'limit'          => $limit,
+				'ending_before'  => $ending_before,
 				'starting_after' => $starting_after
 			));
-			$customer = new StripeCustomer($cus_attr);
-			return $customer->getCustomerAccount()->cards->all($params, $this->access_token);
+			
+			$sources = $this->getCustomer()->sources;
+			if (!$sources) {
+				return false;
+			}
+		
+			return $sources->all($params);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -408,7 +510,7 @@ class StripeClient {
 	 */
 	public function getPlan($plan_id = '') {
 		try {
-			return \Stripe\Plan::retrieve($plan_id, $this->access_token);
+			return \Stripe\Plan::retrieve($plan_id);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -440,7 +542,7 @@ class StripeClient {
 				}
 			}
 			$data = array_filter($data);
-			return \Stripe\Plan::create($data, $this->access_token);
+			return \Stripe\Plan::create($data);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -507,7 +609,7 @@ class StripeClient {
 				'ending_before' => $ending_before,
 				'starting_after' => $starting_after
 			));
-			return \Stripe\Plan::all(array_filter($params), $this->access_token);
+			return \Stripe\Plan::all(array_filter($params));
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -516,14 +618,15 @@ class StripeClient {
 
 	/**
 	 * Get an existing customer subscription
-	 * @param mixed $cus_attr
 	 * @param string $subscription_id
 	 * @return \Stripe\Card|false
 	 */
-	public function getSubscription($cus_attr = null, $subscription_id = '') {
+	public function getSubscription($subscription_id = '') {
+		
 		try {
-			$customer = new StripeCustomer($cus_attr);
-			return $customer->getCustomerAccount()->subscriptions->retrieve($subscription_id, $this->access_token);
+		
+			return $this->getCustomer()->subscriptions->retrieve($subscription_id);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -533,11 +636,11 @@ class StripeClient {
 	/**
 	 * Subscribe user to a plan
 	 *
-	 * @param mixed $cus_attr	GUID of the user
 	 * @param array $data				Data
 	 * @return \Stripe\Subscription|false
 	 */
-	public function createSubscription($cus_attr = 0, $data = array()) {
+	public function createSubscription($data = array()) {
+		
 		$fields = array(
 			'plan',
 			'card',
@@ -548,18 +651,20 @@ class StripeClient {
 			'trial_period_days',
 			'metadata',
 		);
+		
 		try {
+
 			foreach ($data as $key => $value) {
 				if (!in_array($key, $fields)) {
 					$data[$key] = '';
 				}
 			}
 
-			$data = array_filter($data);
-
-			$customer = new StripeCustomer($cus_attr);
-			$subscription = $customer->getCustomerAccount()->subscriptions->create($data, $this->access_token);
+			$data         = array_filter($data);
+			$subscription = $this->getCustomer()->subscriptions->create($data);
+			
 			return $subscription;
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -568,12 +673,12 @@ class StripeClient {
 
 	/**
 	 * Update an existing subscription
-	 * @param mixed $cus_attr
 	 * @param string $subscription_id
 	 * @param array $data
 	 * @return \Stripe\Subscription|false
 	 */
-	public function updateSubscription($cus_attr = 0, $subscription_id = '', $data = array()) {
+	public function updateSubscription($subscription_id = '', $data = array()) {
+		
 		$fields = array(
 			'plan',
 			'card',
@@ -585,18 +690,23 @@ class StripeClient {
 			'trial_period_days',
 			'metadata',
 		);
+		
 		try {
 
-			$subscription = $this->getSubscription($cus_attr, $subscription_id);
+			$subscription = $this->getSubscription($subscription_id);
+			
 			if (!$subscription) {
 				return false;
 			}
+			
 			foreach ($data as $key => $value) {
 				if (in_array($key, $fields) && $value) {
 					$subscription->$key = $value;
 				}
 			}
+			
 			return $subscription->save();
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -605,18 +715,16 @@ class StripeClient {
 
 	/**
 	 * Cancel an existing subscription
-	 * @param mixed $cus_attr
 	 * @param string $subscription_id
 	 * @param boolean $at_period_end
 	 * @return \Stripe\Subscription
 	 */
-	public function cancelSubscription($cus_attr = 0, $subscription_id = '', $at_period_end = false) {
+	public function cancelSubscription($id, $at_period_end = false) {
+		
 		try {
-			$subscription = $this->getSubscription($cus_attr, $subscription_id);
-			if (!$subscription) {
-				return false;
-			}
-			return $subscription->cancel(array('at_period_end' => $at_period_end));
+		
+			return $this->getCustomer()->subscriptions->retrieve($id)->cancel(array('at_period_end' => $at_period_end));
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -630,15 +738,23 @@ class StripeClient {
 	 * @param string $starting_after	ID of the last element in the previous list
 	 * @return boolean
 	 */
-	public function getSubscriptions($cus_attr = null, $limit = 10, $ending_before = null, $starting_after = null) {
+	public function getSubscriptions($limit = 10, $ending_before = null, $starting_after = null) {
+		
 		try {
+			
 			$params = array_filter(array(
-				'limit' => $limit,
-				'ending_before' => $ending_before,
+				'limit'          => $limit,
+				'ending_before'  => $ending_before,
 				'starting_after' => $starting_after
 			));
-			$customer = new StripeCustomer($cus_attr);
-			return $customer->getCustomerAccount()->subscriptions->all($params, $this->access_token);
+			
+			$subscriptions = $this->getCustomer()->subscriptions;
+			if (!$subscriptions) {
+				return false;
+			}
+			
+			return $subscriptions->all($params);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -652,7 +768,7 @@ class StripeClient {
 	 */
 	public function getCharge($charge_id = '') {
 		try {
-			return \Stripe\Charge::retrieve($charge_id, $this->access_token);
+			return \Stripe\Charge::retrieve($charge_id);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -661,12 +777,13 @@ class StripeClient {
 
 	/**
 	 * Create a new charge
-	 * @param mixed $cus_attr
 	 * @param array $data
 	 * @return \Stripe\Charge|false
 	 */
-	public function createCharge($cus_attr = null, $data = array()) {
+	public function createCharge($data = array()) {
+		
 		try {
+		
 			$fields = array(
 				'amount',
 				'currency',
@@ -677,17 +794,18 @@ class StripeClient {
 				'statement_description',
 				'application_fee',
 			);
+			
 			foreach ($data as $key => $value) {
 				if (!in_array($key, $fields)) {
 					$data[$key] = '';
 				}
 			}
-			$data = array_filter($data);
+			
+			$data             = array_filter($data);
+			$data['customer'] = $this->getCustomer()->id;
 
-			$customer = new StripeCustomer($cus_attr);
-			$data['customer'] = $customer->getCustomerAccount()->id;
-
-			return \Stripe\Charge::create($data, $this->access_token);
+			return \Stripe\Charge::create($data);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -748,29 +866,34 @@ class StripeClient {
 
 	/**
 	 * Get all customer charges
-	 * @param mixed $cus_attr
 	 * @param string $limit				Number of items to retrieve
 	 * @param string $ending_before		ID of the first element in the previous list
 	 * @param string $starting_after	ID of the last element in the previous list
 	 * @param mixed $created
 	 * @return boolean
 	 */
-	public function getCharges($cus_attr = null, $limit = 10, $ending_before = null, $starting_after = null, $created = null) {
+	public function getCharges($limit = 10, $ending_before = null, $starting_after = null, $created = null) {
+		
 		try {
-			if ($cus_attr) {
-				$customer = new StripeCustomer($cus_attr);
-				$customer_id = $customer->getCustomerAccount()->id;
+			
+			if ($this->customer) {
+				$customer_id = $this->getCustomer()->id;
+			}
+			
+			if (!$customer_id) {
+				return false;
 			}
 
 			$params = array_filter(array(
-				'created' => $created,
-				'customer' => $customer_id,
-				'limit' => $limit,
-				'ending_before' => $ending_before,
+				'created'        => $created,
+				'customer'       => $customer_id,
+				'limit'          => $limit,
+				'ending_before'  => $ending_before,
 				'starting_after' => $starting_after
 			));
 
-			return \Stripe\Charge::all($params, $this->access_token);
+			return \Stripe\Charge::all($params);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -784,7 +907,7 @@ class StripeClient {
 	 */
 	public function getInvoice($invoice_id = '') {
 		try {
-			return \Stripe\Invoice::retrieve($invoice_id, $this->access_token);
+			return \Stripe\Invoice::retrieve($invoice_id);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -793,18 +916,20 @@ class StripeClient {
 
 	/**
 	 * Get an upcoming invoice
-	 * @param mixed $cus_attr
 	 * @param string $subscription_id
 	 * @return \Stripe\Invoice|false
 	 */
-	public function getUpcomingInvoice($cus_attr = null, $subscription_id = '') {
+	public function getUpcomingInvoice($subscription_id = '') {
+		
 		try {
-			$customer = new StripeCustomer($cus_attr);
+		
 			$data = array(
-				'customer' => $customer->getCustomerAccount()->id,
+				'customer'     => $this->getCustomer()->id,
 				'subscription' => $subscription_id,
 			);
-			return \Stripe\Invoice::upcoming(array_filter($data), $this->access_token);
+		
+			return \Stripe\Invoice::upcoming(array_filter($data));
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -813,11 +938,10 @@ class StripeClient {
 
 	/**
 	 * Create a new Stripe invoice
-	 * @param mixed $cus_attr
 	 * @param array $data
 	 * @return \Stripe\Invoice|false
 	 */
-	public function createInvoice($cus_attr = null, $data = array()) {
+	public function createInvoice($data = array()) {
 
 		$fields = array(
 			'application_fee',
@@ -825,18 +949,20 @@ class StripeClient {
 			'metadata',
 			'subscription',
 		);
+
 		try {
+		
 			foreach ($data as $key => $value) {
 				if (!in_array($key, $fields)) {
 					$data[$key] = '';
 				}
 			}
-			$data = array_filter($data);
+		
+			$data             = array_filter($data);
+			$data['customer'] = $this->getCustomer()->id;
 
-			$customer = new StripeCustomer($cus_attr);
-			$data['customer'] = $customer->getCustomerAccount()->id;
-
-			return \Stripe\Invoice::create($data, $this->access_token);
+			return \Stripe\Invoice::create($data);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -876,25 +1002,45 @@ class StripeClient {
 
 	/**
 	 * Get all invoices
-	 * @param mixed $cus_attr
 	 * @param string $limit				Number of invoices to retrieve
 	 * @param string $ending_before		ID of the first element in the previous list
 	 * @param string $starting_after	ID of the last element in the previous list
 	 * @param mixed $date
 	 * @return boolean
 	 */
-	public function getInvoices($cus_attr = null, $limit = 10, $ending_before = null, $starting_after = null, $date = null) {
+	public function getInvoices($limit = 10, $ending_before = null, $starting_after = null, $date = null) {
+		
 		try {
+	
 			$params = array_filter(array(
-				'limit' => $limit,
-				'ending_before' => $ending_before,
+				'limit'          => $limit,
+				'ending_before'  => $ending_before,
 				'starting_after' => $starting_after,
-				'date' => $date,
+				'date'           => $date,
 			));
-			$customer = new StripeCustomer($cus_attr);
-			$params['customer'] = $customer->getCustomerAccount()->id;
+			
+			if (!$this->getCustomer()->id) {
+				return false;
+			}
+	
+			$params['customer'] = $this->getCustomer()->id;
 
-			return \Stripe\Invoice::all(array_filter($params), $this->access_token);
+			return \Stripe\Invoice::all(array_filter($params));
+	
+		} catch (Exception $ex) {
+			$this->log($ex);
+			return false;
+		}
+	}
+
+	/**
+	 * Get a coupon by ID
+	 * @param string $invoiceitem_id
+	 * @return \Stripe\InvoiceItem|false
+	 */
+	public function getCoupon($coupon) {
+		try {
+			return \Stripe\Coupon::retrieve($coupon);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -908,7 +1054,7 @@ class StripeClient {
 	 */
 	public function getInvoiceItem($invoiceitem_id = '') {
 		try {
-			return \Stripe\InvoiceItem::retrieve($invoiceitem_id, $this->access_token);
+			return \Stripe\InvoiceItem::retrieve($invoiceitem_id);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -917,11 +1063,11 @@ class StripeClient {
 
 	/**
 	 * Create a new invoice item
-	 * @param mixed $cus_attr
 	 * @param array|string $data
 	 * @return \Stripe\InvoiceItem|false
 	 */
-	public function createInvoiceItem($cus_attr = null, $data = array()) {
+	public function createInvoiceItem($data = array()) {
+		
 		$fields = array(
 			'amount',
 			'currency',
@@ -938,11 +1084,12 @@ class StripeClient {
 					$data[$key] = '';
 				}
 			}
-			$data = array_filter($data);
-
-			$customer = new StripeCustomer($cus_attr);
-			$data['customer'] = $data;
-			return \Stripe\InvoiceItem::create($data, $this->access_token);
+			
+			$data             = array_filter($data);
+			$data['customer'] = $this->customer;
+			
+			return \Stripe\InvoiceItem::create($data);
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -1000,7 +1147,6 @@ class StripeClient {
 	/**
 	 * Get all invoice items
 	 *
-	 * @param mixed $cus_attr
 	 * @param string $invoice_id
 	 * @param string $limit				Number of invoiceitems to retrieve
 	 * @param string $ending_before		ID of the first element in the previous list
@@ -1008,8 +1154,10 @@ class StripeClient {
 	 * @param mixed $created
 	 * @return array|false
 	 */
-	public function getInvoiceItems($cus_attr = null, $invoice_id = null, $limit = 10, $ending_before = null, $starting_after = null, $created = null) {
+	public function getInvoiceItems($invoice_id = null, $limit = 10, $ending_before = null, $starting_after = null, $created = null) {
+		
 		try {
+			
 			$params = array_filter(array(
 				'limit' => $limit,
 				'ending_before' => $ending_before,
@@ -1017,17 +1165,23 @@ class StripeClient {
 			));
 
 			if ($invoice_id) {
+				
 				$invoice = $this->getInvoice($invoice_id);
+				
 				if (!$invoice) {
 					return false;
 				}
+			
 				return $invoice->lines->all(array_filter($params));
+			
 			} else {
-				$customer = new StripeCustomer($cus_attr);
-				$params['customer'] = $customer->getCustomerAccount()->id;
-				$params['created'] = $created;
-				return \Stripe\InvoiceItem::all(array_filter($params), $this->access_token);
+				
+				$params['customer'] = $this->getCustomer()->id;
+				$params['created']  = $created;
+				
+				return \Stripe\InvoiceItem::all(array_filter($params));
 			}
+		
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -1040,7 +1194,7 @@ class StripeClient {
 	 */
 	public function getAccount() {
 		try {
-			return \Stripe\Account::retrieve($this->access_token);
+			return \Stripe\Account::retrieve();
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;
@@ -1054,7 +1208,7 @@ class StripeClient {
 	 */
 	public function getEvent($event_id = '') {
 		try {
-			return \Stripe\Event::retrieve($event_id, $this->access_token);
+			return \Stripe\Event::retrieve($event_id);
 		} catch (Exception $ex) {
 			$this->log($ex);
 			return false;

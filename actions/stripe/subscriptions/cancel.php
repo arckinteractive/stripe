@@ -10,11 +10,11 @@ if (!elgg_instanceof($user) || !$user->canEdit()) {
 	forward(REFERER);
 }
 
-$stripe = new StripeClient();
-$subscription = $stripe->getSubscription($user->guid, $subscription_id);
+$stripe = new StripeClient($user->guid);
+$subscription = $stripe->getSubscription($subscription_id);
 
 if ($subscription) {
-	$subscription = $stripe->cancelSubscription($user->guid, $subscription->id);
+	$subscription = $stripe->cancelSubscription($subscription->id);
 }
 
 if ($subscription->status == 'canceled' || $subscription->cancel_at_period_end) {

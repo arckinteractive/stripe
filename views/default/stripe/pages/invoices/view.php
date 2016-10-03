@@ -4,7 +4,7 @@ $id = elgg_extract('id', $vars);
 
 $user = elgg_get_page_owner_entity();
 
-$stripe = new StripeClient();
+$stripe = new StripeClient($user->guid);
 $invoice = $stripe->getInvoice($id);
 
 $title = elgg_echo('stripe:invoices:title', array($invoice->id));
@@ -27,7 +27,7 @@ echo elgg_view_module('info', elgg_echo('stripe:invoices:items:title', array($id
 )));
 
 if ($invoice->subscription) {
-	$subscription = $stripe->getSubscription($invoice->customer, $invoice->subscription);
+	$subscription = $stripe->getSubscription($invoice->subscription);
 
 	if ($subscription) {
 		echo elgg_view_module('info', elgg_echo('stripe:subscriptions:title', array($subscription->id)), elgg_view('stripe/objects/subscription', array(

@@ -10,8 +10,8 @@ if (!elgg_instanceof($user) || !$user->canEdit()) {
 	forward(REFERER);
 }
 
-$stripe = new StripeClient();
-if ($stripe->setDefaultCard($user->guid, $card_id)) {
+$stripe = new StripeClient($user->guid);
+if ($stripe->setDefaultCard($card_id)) {
 	system_message(elgg_echo('stripe:cards:make_default:success'));
 } else {
 	register_error(elgg_echo('stripe:cards:make_default:error'));

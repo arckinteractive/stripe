@@ -62,22 +62,25 @@ class StripeMerchant {
 			return false;
 		}
 
-		if (!$access_token = $this->getAccessToken()) {
-			return false;
-		}
-
 		try {
-			$stripe = new StripeClient();
-			$stripe->setAccessToken($access_token);
+			
+			$stripe  = new StripeClient();
 			$account = $stripe->getAccount();
+			
 			if (!$account->id || isset($account->deleted)) {
 				throw new \Stripe\Error('Account does not exist or has been deleted');
 			}
+			
 			$this->account = $account;
+			
 			return $this->account;
+		
 		} catch (\Stripe\Error $e) {
+		
 			$this->entity->setPrivateSetting('stripe_secret_key', null);
+		
 			$this->entity->setPrivateSetting('stripe_publishable_key', null);
+		
 			return false;
 		}
 	}
@@ -124,7 +127,7 @@ class StripeMerchant {
 		switch ($this->entity->getType()) {
 
 			case 'site' :
-				return StripeClientFactory::getSecretKey();
+				return StripeClient::getSecretKey();
 				break;
 
 			default :

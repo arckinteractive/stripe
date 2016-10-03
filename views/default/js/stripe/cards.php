@@ -5,7 +5,7 @@ elgg.stripe.cards = function() {
 
 	Stripe.setPublishableKey(elgg.config.stripePublishableKey);
 
-	$('form:has(fieldset[data-stripe])').on('submit', elgg.stripe.submitCardForm);
+	$('form.data-stripe').on('submit', elgg.stripe.submitCardForm);
 
 	$('.stripe-cards-picker').on('change', function(e) {
 		var $elem = $(this);
@@ -20,7 +20,7 @@ elgg.stripe.cards = function() {
 					if (data) {
 						$(data).find('form').data('picker', true);
 						elgg.stripe.paymentMethodPickerModal = elgg.stripe.lightboxOpen(data, 600);
-						$('form:has(fieldset[data-stripe])').on('submit', elgg.stripe.submitCardForm);
+						$('form.data-stripe)').on('submit', elgg.stripe.submitCardForm);
 					}
 				},
 				error: function() {
@@ -49,7 +49,7 @@ elgg.stripe.cards = function() {
 				if (data) {
 					$(data).find('form').data('picker', true);
 					elgg.stripe.paymentMethodPickerModal = elgg.stripe.lightboxOpen(data, 600);
-					$('form:has(fieldset[data-stripe])').on('submit', elgg.stripe.submitCardForm);
+					$('form.data-stripe)').on('submit', elgg.stripe.submitCardForm);
 				}
 			},
 			error: function() {
@@ -75,7 +75,7 @@ elgg.stripe.submitCardForm = function(e) {
 	$submit.data('text', $submit.val());
 	$submit.addClass('elgg-state-disabled').val(elgg.echo('stripe:cards:validating')).prop('disabled', true);
 
-	if (!$form.has('fieldset[data-stripe]')) {
+	if (!$form.hasClass('data-stripe')) {
 		return true;
 	}
 
@@ -107,7 +107,7 @@ elgg.stripe.submitCardForm = function(e) {
 						}
 					},
 					complete: function() {
-						$form.find('fieldset[data-stripe]').remove();
+						$form.removeClass('data-stripe');
 					}
 				});
 			
@@ -118,7 +118,7 @@ elgg.stripe.submitCardForm = function(e) {
 				if (submitForm) {
 					$form.submit();
 				} else {
-					$form.find('fieldset[data-stripe]').remove();
+					$form.removeClass('data-stripe');
 				}
 			}
 		}

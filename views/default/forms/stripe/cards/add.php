@@ -156,7 +156,7 @@ $supported_brands = '<ul class="stripe-accepted-cards">' . $supported_brands . '
 
 <?php
 if (elgg_extract('show_footer', $vars, true)) {
-	echo '<div class="row elgg-foot text-right">';
+	echo '<div class="elgg-foot text-right">';
 	echo elgg_view('input/submit', array(
 		'value' => elgg_echo('save')
 	));

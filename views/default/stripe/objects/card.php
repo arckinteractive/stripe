@@ -7,14 +7,14 @@ if (!$card instanceof \Stripe\Card) {
 	return;
 }
 
-$img = strtolower(str_replace(' ', '', $card->type));
+$img = strtolower(str_replace(' ', '', $card->brand));
 $icon = elgg_view('output/img', array(
 	'src' => "mod/stripe/graphics/credit_card/$img.png",
 	'class' => 'stripe-card-icon',
 	'width' => 50
 ));
 
-$title = "{$card->type}-{$card->last4}";
+$title = "{$card->brand}-{$card->last4}";
 
 $actions = elgg_view_menu('stripe-actions', array(
 	'object' => $card,

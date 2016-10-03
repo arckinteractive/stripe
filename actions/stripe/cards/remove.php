@@ -10,8 +10,8 @@ if (!elgg_instanceof($user) || !$user->canEdit()) {
 	forward(REFERER);
 }
 
-$stripe = new StripeClient();
-if ($stripe->deleteCard($user->guid, $card_id)) {
+$stripe = new StripeClient($user->guid);
+if ($stripe->deleteCard($card_id)) {
 	system_message(elgg_echo('stripe:cards:remove:success'));
 } else {
 	register_error(elgg_echo('stripe:cards:remove:error'));

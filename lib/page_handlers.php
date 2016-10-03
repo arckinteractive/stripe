@@ -12,6 +12,7 @@ function stripe_page_handler($page, $handler) {
 	gatekeeper();
 
 	$username = elgg_extract(0, $page, false);
+	
 	if ($username) {
 		$user = get_user_by_username($username);
 	}
@@ -28,22 +29,22 @@ function stripe_page_handler($page, $handler) {
 	elgg_push_breadcrumb(elgg_echo('stripe:billing'), 'billing');
 
 	$context = elgg_extract(1, $page, 'cards');
-	$action = elgg_extract(2, $page, 'all');
+	$action  = elgg_extract(2, $page, 'all');
 
 	$view = "stripe/pages/$context/$action";
 
 	if (elgg_view_exists($view)) {
 
 		$params = array(
-			'entity' => $user,
-			'id' => elgg_extract(3, $page, false),
+			'entity'  => $user,
+			'id'      => elgg_extract(3, $page, false),
 			'context' => $page
 		);
 
-		$title = elgg_echo("stripe:$context:$action");
+		$title   = elgg_echo("stripe:$context:$action");
 		$content = elgg_view($view, $params);
 		$sidebar = elgg_view('stripe/sidebar', $params);
-		$filter = elgg_view("stripe/filters/$context/$action", $params);
+		$filter  = elgg_view("stripe/filters/$context/$action", $params);
 	}
 
 	if ($content) {
@@ -51,10 +52,10 @@ function stripe_page_handler($page, $handler) {
 			echo $content;
 		} else {
 			$layout = elgg_view_layout('content', array(
-				'title' => $title,
+				'title'   => $title,
 				'content' => $content,
 				'sidebar' => $sidebar,
-				'filter' => $filter,
+				'filter'  => $filter,
 			));
 
 			echo elgg_view_page($title, $layout);

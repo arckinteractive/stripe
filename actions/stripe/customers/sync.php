@@ -2,7 +2,7 @@
 
 access_show_hidden_entities(true);
 
-$stripe = new StripeClient;
+$stripe = new StripeClient();
 
 $has_more = true;
 $starting_after = null;

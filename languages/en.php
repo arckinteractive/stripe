@@ -6,6 +6,7 @@ $english = array(
 
 	'admin:stripe' => 'Stripe',
 	'admin:stripe:customers' => 'Customers',
+	'stripe:billing' => "Billing",
 	
 	'stripe:settings:environment' => 'Environment',
 	'stripe:settings:environment:select' => 'Select environment',

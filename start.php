@@ -8,9 +8,6 @@ require_once __DIR__ . '/lib/events.php';
 require_once __DIR__ . '/lib/hooks.php';
 require_once __DIR__ . '/lib/page_handlers.php';
 
-elgg_register_event_handler('init', 'system', array(__NAMESPACE__ . '\\StripeApiFactory', 'init'), 1);
-elgg_register_event_handler('shutdown', 'system', array(__NAMESPACE__ . '\\StripeApiFactory', 'shutdown'));
-
 elgg_register_event_handler('init', 'system', __NAMESPACE__ . '\\stripe_init');
 elgg_register_event_handler('pagesetup', 'system', __NAMESPACE__ . '\\stripe_pagesetup');
 
@@ -64,7 +61,7 @@ function stripe_webhook_handler($environment) {
 	$event_json = json_decode($body);
 	$event_id   = $event_json->id;
 
-	$gateway = new StripeClient($environment);
+	$gateway = new StripeClient();
 	$event   = $gateway->getEvent($event_id);
 
 	if (!$event) {

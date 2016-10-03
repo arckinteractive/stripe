@@ -31,7 +31,7 @@ class StripeClientFactory {
 			$config->secret_key = elgg_get_plugin_setting('stripe_test_secret_key', 'stripe');
 			$config->publishable_key = elgg_get_plugin_setting('stripe_test_publishable_key', 'stripe');
 		}
-		
+
 		self::$api_config = $config;
 		
 		\Stripe\Stripe::setApiKey($config->secret_key);
