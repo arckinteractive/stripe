@@ -1,12 +1,14 @@
 <?php
 
-$objects = elgg_extract('objects', $vars);
-$limit = elgg_extract('limit', $vars);
-$ending_before = elgg_extract('ending_before', $vars);
+$objects        = elgg_extract('objects', $vars);
+$limit          = elgg_extract('limit', $vars);
+$ending_before  = elgg_extract('ending_before', $vars);
 $starting_after = elgg_extract('starting_after', $vars);
 
 if ($objects && $objects->data) {
+
 	echo '<ul class="elgg-list stripe-list">';
+
 	foreach ($objects->data as $object) {
 		$type = $object->object;
 		echo '<li class="elgg-item stripe-item stripe-' . $type . '">';
@@ -18,7 +20,9 @@ if ($objects && $objects->data) {
 	echo '</ul>';
 
 	if ($objects->has_more || $starting_after) {
+
 		echo '<ul class="elgg-pagination stripe-pagination">';
+
 		if ($starting_after) {
 			echo '<li class="prev">';
 			echo elgg_view('output/url', array(

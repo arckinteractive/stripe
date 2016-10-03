@@ -23,7 +23,7 @@ function stripe_actions_menu($hook, $type, $return, $params) {
 				return $return;
 			}
 
-			$stripe = new StripeClient();
+			$stripe  = new StripeClient();
 			$default = $stripe->getDefaultCard($user->guid);
 
 			if ($default->id == $object->id) {
@@ -158,7 +158,7 @@ function stripe_customer_created_event($hook, $type, $return, $params) {
 
 	$event = elgg_extract('event', $params);
 
-	if (!$event instanceof Stripe_Event) {
+	if (!$event instanceof \Stripe\Event) {
 		return $return;
 	}
 
@@ -233,7 +233,7 @@ function stripe_customer_deleted_event($hook, $type, $return, $params) {
 
 	$event = elgg_extract('event', $params);
 
-	if (!$event instanceof Stripe_Event) {
+	if (!$event instanceof \Stripe\Event) {
 		return $return;
 	}
 
@@ -283,11 +283,11 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 
 	$event = elgg_extract('event', $params);
 
-	if (!$event instanceof Stripe_Event) {
+	if (!$event instanceof \Stripe\Event) {
 		return $return;
 	}
 
-	$charge = $event->data->object;
+	$charge      = $event->data->object;
 	$customer_id = $charge->customer;
 
 	$customer = stripe_get_user_from_customer_id($customer_id);
@@ -303,6 +303,7 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 		$amount = new StripePricing($charge->amount / 100, 0, 0, $charge->currency);
 
 		$subject = elgg_echo('stripe:notification:charge:succeeded:subject', array($merchant->name));
+		
 		$body = elgg_echo('stripe:notification:charge:succeeded:body', array(
 			$customer->name,
 			$amount,
@@ -340,7 +341,7 @@ function stripe_charge_failed_event($hook, $type, $return, $params) {
 
 	$event = elgg_extract('event', $params);
 
-	if (!$event instanceof Stripe_Event) {
+	if (!$event instanceof \Stripe\Event) {
 		return $return;
 	}
 
@@ -398,7 +399,7 @@ function stripe_charge_refunded_event($hook, $type, $return, $params) {
 
 	$event = elgg_extract('event', $params);
 
-	if (!$event instanceof Stripe_Event) {
+	if (!$event instanceof \Stripe\Event) {
 		return $return;
 	}
 

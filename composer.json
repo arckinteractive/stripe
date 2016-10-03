@@ -17,17 +17,10 @@
 	"extra": {
 		"installer-name": "stripe"
 	},
-	"autoload": {
-		"classmap": ["classes/"]
-	},
-	"config": {
-		"vendor-dir": "vendors",
-		"preferred-install": "dist"
-	},
 	"require": {
 		"php": ">=5.3.3",
 		"composer/installers": ">=1.0.8",
-		"stripe/stripe-php": "@stable"
+        "stripe/stripe-php": "3.*"
 	}
 }
 

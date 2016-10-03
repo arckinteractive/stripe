@@ -3,7 +3,7 @@
 $card = elgg_extract('object', $vars);
 $full = elgg_extract('full_view', $vars);
 
-if (!$card instanceof Stripe_Card) {
+if (!$card instanceof \Stripe\Card) {
 	return;
 }
 

@@ -3,7 +3,7 @@
 /**
  * Check if user has a card on file
  * @param integer $user_guid
- * @return Stripe_Card|boolean
+ * @return \Stripe\Card|boolean
  */
 function stripe_has_card($user_guid = 0) {
 
@@ -21,7 +21,7 @@ function stripe_has_card($user_guid = 0) {
  * Create a new customer card from a Stripe token
  * @param integer $user_guid
  * @param string $token
- * @return Stripe_Card|false
+ * @return \Stripe\Card|false
  */
 function stripe_create_card($user_guid = 0, $token = '') {
 

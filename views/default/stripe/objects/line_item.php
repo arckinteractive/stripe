@@ -1,7 +1,7 @@
 <?php
 $invoiceitem = elgg_extract('object', $vars);
 
-if (!$invoiceitem instanceof Stripe_Object) {
+if (!$invoiceitem instanceof \Stripe\Object) {
 	return;
 }
 ?>

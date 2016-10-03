@@ -14,13 +14,16 @@ class StripeClientFactory {
 	 * Initialize Stripe
 	 */
 	public static function init() {
+		
 		self::$private_log = array();
-		self::$public_log = array();
+		self::$public_log  = array();
 
 		if (!self::$environment) {
 			self::$environment = self::filterEnvironment();
 		}
+		
 		$config = new stdClass();
+		
 		if (self::$environment == self::ENV_PRODUCTION) {
 			$config->secret_key = elgg_get_plugin_setting('stripe_production_secret_key', 'stripe');
 			$config->publishable_key = elgg_get_plugin_setting('stripe_production_publishable_key', 'stripe');
@@ -28,8 +31,10 @@ class StripeClientFactory {
 			$config->secret_key = elgg_get_plugin_setting('stripe_test_secret_key', 'stripe');
 			$config->publishable_key = elgg_get_plugin_setting('stripe_test_publishable_key', 'stripe');
 		}
+		
 		self::$api_config = $config;
-		Stripe::setApiKey($config->secret_key);
+		
+		\Stripe\Stripe::setApiKey($config->secret_key);
 	}
 
 	/**
