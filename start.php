@@ -76,7 +76,7 @@ function stripe_webhook_handler($environment) {
 	
 	access_show_hidden_entities(true);
 
-	$result = elgg_trigger_plugin_hook_handler($event->type, 'stripe.events', array(
+	$result = elgg_trigger_plugin_hook($event->type, 'stripe.events', array(
 		'environment' => $environment,
 		'event'       => $event,
 	), array(
