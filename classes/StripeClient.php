@@ -331,7 +331,7 @@ class StripeClient {
 		
 		try {
 		
-			$card_id = $this->getCustomer()->default_card;
+			$card_id = $this->getCustomer()->default_source;
 			
 			if (!$card_id) {
 				return false;
