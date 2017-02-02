@@ -45,6 +45,10 @@ function stripe_create_card($user_guid = 0, $token = '') {
  * @return ElggUser|false
  */
 function stripe_get_user_from_customer_id($customer_id = '') {
+	
+	if (!$customer_id) {
+		return false;
+	}
 
 	$users = elgg_get_entities_from_metadata(array(
 		'types' => 'user',
@@ -65,6 +69,10 @@ function stripe_get_user_from_customer_id($customer_id = '') {
  * @return ElggUser|false
  */
 function stripe_get_user_from_account_id($account_id = '') {
+	
+	if (!$account_id) {
+		return false;
+	}
 
 	$users = elgg_get_entities_from_metadata(array(
 		'types' => 'user',
