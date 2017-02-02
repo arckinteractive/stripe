@@ -54,7 +54,7 @@ class StripeClient {
 
 	public static function getSecretKey()
 	{
-		$environment = elgg_get_plugin_setting('stripe_environment', 'stripe');
+		$environment = elgg_get_plugin_setting('environment', 'stripe');
 
 		if ($environment == 'production') {
 			$secret_key = elgg_get_plugin_setting('stripe_production_secret_key', 'stripe');
@@ -67,7 +67,7 @@ class StripeClient {
 
 	public static function getPublishableKey()
 	{
-		$environment = elgg_get_plugin_setting('stripe_environment', 'stripe');
+		$environment = elgg_get_plugin_setting('environment', 'stripe');
 		
 		if ($environment == 'production') {
 			$publishable_key = elgg_get_plugin_setting('stripe_production_publishable_key', 'stripe');

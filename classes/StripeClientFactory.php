@@ -54,7 +54,7 @@ class StripeClientFactory {
 	public static function filterEnvironment($environment = null) {
 
 		if (!$environment) {
-			$environment = elgg_get_plugin_setting('stripe_environment', 'stripe');
+			$environment = elgg_get_plugin_setting('environment', 'stripe');
 		}
 
 		if ($environment !== self::ENV_PRODUCTION) {
