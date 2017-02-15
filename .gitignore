@@ -4,6 +4,11 @@
 robots.txt
 /nbproject/
 /.sass-cache/
-vendor/
-
+/node_modules/
+/build/
+/mod/
+/releases/
+/vendor/
+composer.lock
+Gemfile.lock
 .env
