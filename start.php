@@ -1,7 +1,9 @@
 <?php
 
 // Composer autoload
-require_once __DIR__ . '/vendor/autoload.php';
+if (!class_exists('\\Stripe\\Stripe') && file_exists(__DIR__ . '/vendor/autoload.php')) {
+	require_once __DIR__ . '/vendor/autoload.php';
+}
 
 require_once __DIR__ . '/lib/functions.php';
 require_once __DIR__ . '/lib/events.php';

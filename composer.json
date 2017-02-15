@@ -1,26 +1,26 @@
 {
-	"name": "arckinteractive/stripe",
-	"type": "elgg-plugin",
-	"description": "This plugin provides an Elgg API layer for interfacing with Stripe",
-	"homepage": "http://arckinteractive.com",
-	"minimum-stability": "stable",
-	"keywords": [
-		"elgg", "plugin", "payments", "stripe"
-	],
-	"license": "GPL-2.0",
-	"authors": [
-		{
-			"name": "Ismayil Khayredinov",
-			"email": "ismayil@hypejunction.com"
-		}
-	],
-	"extra": {
-		"installer-name": "stripe"
-	},
-	"require": {
-		"php": ">=5.3.3",
-		"composer/installers": ">=1.0.8",
+    "name": "arckinteractive/stripe",
+    "type": "elgg-plugin",
+    "description": "This plugin provides an Elgg API layer for interfacing with Stripe",
+    "homepage": "http://arckinteractive.com",
+    "minimum-stability": "stable",
+    "keywords": [
+        "elgg", "plugin", "payments", "stripe"
+    ],
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Ismayil Khayredinov",
+            "email": "ismayil@hypejunction.com"
+        }
+    ],
+    "extra": {
+        "installer-name": "stripe"
+    },
+    "require": {
+        "php": ">=5.3.3",
+        "composer/installers": ">=1.0.8",
         "stripe/stripe-php": "3.*"
-	}
+    }
 }
 

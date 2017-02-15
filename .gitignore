@@ -4,7 +4,6 @@
 robots.txt
 /nbproject/
 /.sass-cache/
-composer.lock
+vendor/
 
-vendors/.git
-vendors/**/.git
+.env
