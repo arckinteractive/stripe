@@ -7,7 +7,7 @@ $english = array(
 	'admin:stripe' => 'Stripe',
 	'admin:stripe:customers' => 'Customers',
 	'stripe:billing' => "Billing",
-	
+
 	'stripe:settings:environment' => 'Environment',
 	'stripe:settings:environment:select' => 'Select environment',
 	'stripe:settings:environment:sandbox' => 'SANDBOX - TEST',
@@ -47,7 +47,7 @@ $english = array(
 	'stripe:customers:description' => 'Description',
 	'stripe:customers:list' => 'Customers',
 	'stripe:customers:sync' => 'Synchronize customers',
-	
+
 	'stripe:cards' => 'Cards',
 	'stripe:cards:none' => 'There are no cards associated with your account',
 	'stripe:cards:all' => 'Credit cards',
@@ -142,33 +142,41 @@ $english = array(
 	'stripe:subscriptions:status:trial_ends_at' => 'Trial ends on %s',
 
 	'stripe:notification:charge:succeeded:subject' => 'Payment to %s succeeded',
-	'stripe:notification:charge:succeeded:body' => 'Dear %s,
+	'stripe:notification:charge:succeeded:body' => '
 
-		Your payment of %s to %s was successful. The payment was made with you %s-%s.
+Dear %s,
 
-		To view the details of this transactions, visit:
-		%s',
+Your payment of %s to %s was successful. The payment was made through your %s-%s.
+
+To view the details of this transactions, please visit:
+%s
+
+',
 
 	'stripe:notification:charge:failed:subject' => 'Payment to %s was not successful',
-	'stripe:notification:charge:failed:body' => 'Dear %s,
+	'stripe:notification:charge:failed:body' => '
 
-		Your payment of %s to %s could not be completed.
+Dear %s,
 
-		There was a problem with your %s-%s:
-		%s.
+Your payment of %s to %s could not be completed.
 
-		To view the details of this transactions, visit:
-		%s',
+There was a problem with your %s-%s:
+%s.
+
+To view the details of this transactions, please visit:
+%s',
 
 	'stripe:notification:charge:refunded:subject' => 'You have recieved a refund from %s',
-	'stripe:notification:charge:refunded:body' => 'Dear %s,
+	'stripe:notification:charge:refunded:body' => '
 
-		Your have recieved a refund in the amount of %s from %s.
+Dear %s,
 
-		Funds will be returned to your %s-%s.
+Your have recieved a refund in the amount of %s from %s.
 
-		To view the details of this transactions, visit:
-		%s',
+Funds will be returned to your %s-%s.
+
+To view the details of this transactions, visit:
+%s',
 
 
 );
