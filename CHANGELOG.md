@@ -1,3 +1,15 @@
+<a name="2.1.4"></a>
+## [2.1.4](https://github.com/arckinteractive/stripe/compare/2.1.2...v2.1.4) (2017-02-16)
+
+
+### Bug Fixes
+
+* **php notice:** check for user entity before creating menu items ([2681c35](https://github.com/arckinteractive/stripe/commit/2681c35))
+* **webhooks:** fix outgoing notifications for charge events ([b522ce1](https://github.com/arckinteractive/stripe/commit/b522ce1))
+* **webhooks:** fix outgoing notifications for charge events ([e60d1ea](https://github.com/arckinteractive/stripe/commit/e60d1ea))
+
+
+
 <a name="2.1.3"></a>
 ## [2.1.3](https://github.com/arckinteractive/stripe/compare/2.1.2...v2.1.3) (2017-02-16)
 
