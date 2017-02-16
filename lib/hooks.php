@@ -147,7 +147,7 @@ function stripe_ping_event($hook, $type, $return, $params) {
 /**
  * Webhook on a new customer
  * Adds a customer id to the user with the customer email, or stores a customer id as a plugin setting
- * 
+ *
  * @param string $hook	Equals 'customer.created'
  * @param string $type	Equals 'stripe.event'
  * @param array $return
@@ -241,7 +241,7 @@ function stripe_customer_deleted_event($hook, $type, $return, $params) {
 
 	// Check if the user with this customer id already exists
 	$user = stripe_get_user_from_customer_id($customer->id);
-	
+
 	if ($user) {
 
 		// Store any customer IDs this user might have for reference
@@ -287,7 +287,7 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 		return $return;
 	}
 
-	$charge      = $event->data->object;
+	$charge = $event->data->object;
 	$customer_id = $charge->customer;
 
 	$customer = stripe_get_user_from_customer_id($customer_id);
@@ -303,13 +303,13 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 		$amount = new StripePricing($charge->amount / 100, 0, 0, $charge->currency);
 
 		$subject = elgg_echo('stripe:notification:charge:succeeded:subject', array($merchant->name));
-		
+
 		$body = elgg_echo('stripe:notification:charge:succeeded:body', array(
 			$customer->name,
-			$amount,
+			$amount->getHumanAmount(),
 			$merchant->name,
-			$charge->card->brand,
-			$charge->card->last4,
+			$charge->source->brand,
+			$charge->source->last4,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
 		));
 
@@ -363,10 +363,10 @@ function stripe_charge_failed_event($hook, $type, $return, $params) {
 		$subject = elgg_echo('stripe:notification:charge:failed:subject', array($merchant->name));
 		$body = elgg_echo('stripe:notification:charge:failed:body', array(
 			$customer->name,
-			$amount,
+			$amount->getHumanAmount(),
 			$merchant->name,
-			$charge->card->brand,
-			$charge->card->last4,
+			$charge->source->brand,
+			$charge->source->last4,
 			$charge->failure_message,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
 		));
@@ -421,10 +421,10 @@ function stripe_charge_refunded_event($hook, $type, $return, $params) {
 		$subject = elgg_echo('stripe:notification:charge:refunded:subject', array($merchant->name));
 		$body = elgg_echo('stripe:notification:charge:refunded:body', array(
 			$customer->name,
-			$amount,
+			$amount->getHumanAmount(),
 			$merchant->name,
-			$charge->card->brand,
-			$charge->card->last4,
+			$charge->source->brand,
+			$charge->source->last4,
 			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
 		));
 
