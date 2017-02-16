@@ -1,3 +1,9 @@
+<a name="2.1.5"></a>
+## [2.1.5](https://github.com/arckinteractive/stripe/compare/2.1.4...v2.1.5) (2017-02-16)
+
+
+
+
 <a name="2.1.4"></a>
 ## [2.1.4](https://github.com/arckinteractive/stripe/compare/2.1.2...v2.1.4) (2017-02-16)
 
