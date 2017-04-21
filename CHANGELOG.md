@@ -1,3 +1,13 @@
+<a name="2.1.6"></a>
+## [2.1.6](https://github.com/arckinteractive/stripe/compare/2.1.5...v2.1.6) (2017-04-21)
+
+
+### Bug Fixes
+
+* **notify:** do not wrap URLs in notification body ([871c559](https://github.com/arckinteractive/stripe/commit/871c559))
+
+
+
 <a name="2.1.5"></a>
 ## [2.1.5](https://github.com/arckinteractive/stripe/compare/2.1.4...v2.1.5) (2017-02-16)
 
