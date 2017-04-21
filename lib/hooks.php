@@ -310,7 +310,7 @@ function stripe_charge_succeeded_event($hook, $type, $return, $params) {
 			$merchant->name,
 			$charge->source->brand,
 			$charge->source->last4,
-			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
+			elgg_normalize_url("billing/$customer->username/charges/all"),
 		));
 
 		if (notify_user($customer->guid, $merchant->guid, $subject, $body)) {
@@ -368,7 +368,7 @@ function stripe_charge_failed_event($hook, $type, $return, $params) {
 			$charge->source->brand,
 			$charge->source->last4,
 			$charge->failure_message,
-			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
+			elgg_normalize_url("billing/$customer->username/charges/all"),
 		));
 
 		if (notify_user($customer->guid, $merchant->guid, $subject, $body)) {
@@ -425,7 +425,7 @@ function stripe_charge_refunded_event($hook, $type, $return, $params) {
 			$merchant->name,
 			$charge->source->brand,
 			$charge->source->last4,
-			elgg_view('output/url', array('href' => elgg_normalize_url("billing/$customer->username/charges/all")))
+			elgg_normalize_url("billing/$customer->username/charges/all"),
 		));
 
 		if (notify_user($customer->guid, $merchant->guid, $subject, $body)) {
