@@ -1,3 +1,13 @@
+<a name="2.1.7"></a>
+## [2.1.7](https://github.com/arckinteractive/stripe/compare/2.1.6...v2.1.7) (2017-10-13)
+
+
+### Bug Fixes
+
+* **data:** do not filter valid falsey values when communicating with Stripe API ([013f441](https://github.com/arckinteractive/stripe/commit/013f441))
+
+
+
 <a name="2.1.6"></a>
 ## [2.1.6](https://github.com/arckinteractive/stripe/compare/2.1.5...v2.1.6) (2017-04-21)
 
